@@ -11,11 +11,18 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - ML_API_URL=http://ml:5000
+    volumes:
+      - ./api_server:/app
+    restart: unless-stopped
 
   ml:
     build: ./ml_matcher
     ports:
-      - "5000:5000"
+      - "5001:5000"
+    # No flask specific environment variables anymore
+    volumes:
+      - ./ml_matcher:/app
+    restart: unless-stopped
 
   mongo:
     image: mongo:6
@@ -23,6 +30,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    restart: unless-stopped
 
 volumes:
   mongo_data:
