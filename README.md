@@ -1,21 +1,6 @@
-```markdown
 # Resume Analyzer Project
 
-![API Server CI/CD](https://github.com/yourusername/resume-analyzer/actions/workflows/api_server.yml/badge.svg)
-![ML Matcher CI/CD](https://github.com/yourusername/resume-analyzer/actions/workflows/ml_matcher.yml/badge.svg)
-
 A comprehensive resume analysis system that uses machine learning to match resumes with job market requirements, providing personalized feedback and recommendations.
-
-## Docker Images
-
-- [Resume Analyzer API Server](https://hub.docker.com/r/yourusername/resume-analyzer-api)
-- [Resume Analyzer ML Matcher](https://hub.docker.com/r/yourusername/resume-analyzer-ml)
-
-## Team
-
-- [Your Name](https://github.com/yourusername)
-- [Team Member 2](https://github.com/teammember2)
-- [Team Member 3](https://github.com/teammember3)
 
 ## Project Description
 
@@ -47,7 +32,7 @@ The project consists of three main components:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/resume-analyzer.git
+git clone https://github.com/${username}/resume-analyzer.git
 cd resume-analyzer
 ```
 
@@ -141,5 +126,3 @@ The MongoDB database contains three collections:
 - `resumes`: Stores information about uploaded resumes
 - `analyses`: Stores analysis results
 - `job_skills`: Stores job market data including skill demand levels
-
-```
