@@ -1,0 +1,83 @@
+# .github/workflows/api_server.yml
+name: API Server CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'api_server/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'api_server/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        cd api_server
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Test with pytest
+      run: |
+        cd api_server
+        pytest tests/ --cov=app --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      with:
+        file: ./api_server/coverage.xml
+        fail_ci_if_error: true
+  
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: ./api_server
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/resume-analyzer-api:latest
+          ${{ secrets.DOCKER_USERNAME }}/resume-analyzer-api:${{ github.sha }}
+  
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    
+    steps:
+    - name: Deploy to Digital Ocean
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DIGITALOCEAN_HOST }}
+        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+        key: ${{ secrets.DIGITALOCEAN_SSHKEY }}
+        script: |
+          cd ~/resume-analyzer
+          git pull
+          docker-compose pull api
+          docker-compose up -d api
