@@ -1,77 +1,43 @@
-<!-- api_server/app/templates/results.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Resume Analysis Results</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        h1 { color: #4a6fa5; }
+        .result { margin-top: 20px; padding: 10px; background-color: #f5f5f5; }
+        .section { margin-bottom: 20px; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Resume Analysis Results</h1>
-            <p>Results for {{ name }}</p>
-        </header>
-        
-        <main class="results-container">
-            <div class="score-section">
-                <h2>Match Score</h2>
-                <div class="progress-bar">
-                    <div class="progress"></div>
-                </div>
-                <p class="score-value">{{ results.match_score|round(1) }}%</p>
-            </div>
-            
-            <div class="skills-section">
-                <h2>Skills Identified</h2>
-                <div class="skills-grid">
-                    {% for skill in results.skills_identified %}
-                    <div class="skill-tag">{{ skill }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <div class="recommendations-section">
-                <h2>Recommendations</h2>
-                <ul class="recommendations-list">
-                    {% for rec in results.recommendations %}
-                    <li>{{ rec }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            
-            <div class="skills-gap-section">
-                <h2>Skills Gap Analysis</h2>
-                <div class="skills-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Missing Skill</th>
-                                <th>Demand Level</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for skill, demand in results.missing_skills %}
-                            <tr>
-                                <td>{{ skill }}</td>
-                                <td>
-                                    <div class="demand-bar">
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <a href="/" class="btn back-btn">Analyze Another Resume</a>
-        </main>
-        
-        <footer>
-            <p>© 2025 Resume Analyzer Project - <a href="https://github.com/yourusername/resume-analyzer">GitHub</a></p>
-            <p>Resume ID: {{ resume_id }}</p>
-        </footer>
+    <h1>Analysis Results</h1>
+    <div class="result">
+        <div class="section"><strong>Name:</strong> {{ name }}</div>
+        <div class="section"><strong>Email:</strong> {{ email }}</div>
+        <div class="section"><strong>File:</strong> {{ filename }}</div>
+        <div class="section"><strong>Match Score:</strong> {{ results['match_score'] }}</div>
+        <div class="section"><strong>Skills Identified:</strong>
+            <ul>
+                {% for skill in results['skills_identified'] %}
+                    <li>{{ skill }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="section"><strong>Missing Skills:</strong>
+            <ul>
+                {% for skill, score in results['missing_skills'] %}
+                    <li>{{ skill }} ({{ score }}%)</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="section"><strong>Recommendations:</strong>
+            <ul>
+                {% for r in results['recommendations'] %}
+                    <li>{{ r }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
+    <a href="/">Back to Upload</a>
 </body>
 </html>

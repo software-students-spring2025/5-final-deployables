@@ -78,27 +78,26 @@ async def upload_resume(
     email: str = Form(...),
     resume: UploadFile = File(...)
 ):
-    """Handle file upload and analyze"""
-    return HTMLResponse(content=f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Analysis Results</title>
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }}
-            h1 {{ color: #4a6fa5; }}
-            .result {{ margin-top: 20px; padding: 10px; background-color: #f5f5f5; }}
-        </style>
-    </head>
-    <body>
-        <h1>Analysis Results</h1>
-        <div class="result">
-            <p>Name: {name}</p>
-            <p>Email: {email}</p>
-            <p>File: {resume.filename}</p>
-            <p>This is a test response. The ML service integration will be added next.</p>
-        </div>
-        <a href="/">Back to Upload</a>
-    </body>
-    </html>
-    """)
+    # Save the resume file
+    file_location = f"/tmp/{uuid.uuid4()}_{resume.filename}"
+    with open(file_location, "wb") as f:
+        f.write(await resume.read())
+
+    # Send to ML service
+    try:
+        with open(file_location, "rb") as f:
+            files = {"resume": (resume.filename, f, resume.content_type)}
+            response = requests.post("http://ml:5000/analyze", files=files)
+            response.raise_for_status()
+            results = response.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ML service failed: {e}")
+
+    # Return HTML with analysis
+    return templates.TemplateResponse("results.html", {
+        "request": request,
+        "name": name,
+        "email": email,
+        "filename": resume.filename,
+        "results": results
+    })
