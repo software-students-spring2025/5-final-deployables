@@ -30,7 +30,13 @@ def identify_skills(text):
     missing = SKILLS_DB - found
     return list(found), [(skill, 90) for skill in missing]  # 90 = fake confidence for now
 
-def preprocess_text():
+def preprocess_text(text):
+    pass
+
+def extract_skills(text):
+    pass
+
+def generate_recommendations(text):
     pass
 
 @app.route('/analyze', methods=['POST'])
