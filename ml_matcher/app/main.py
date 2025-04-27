@@ -4,7 +4,10 @@ from werkzeug.utils import secure_filename
 import PyPDF2
 import docx
 import nltk
+import re
 from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 # Download NLTK stopwords once (on first run)
 nltk.download('stopwords')
@@ -31,10 +34,38 @@ def identify_skills(text):
     return list(found), [(skill, 90) for skill in missing]  # 90 = fake confidence for now
 
 def preprocess_text(text):
-    pass
+    """Tokenizes a given string of text"""
 
-def extract_skills(text):
-    pass
+    text = text.lower()
+
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+
+    tokens = word_tokenize(text)
+
+    stop_words = set(stopwords.words('english'))
+
+    tokens = [token for token in tokens if token not in stop_words]
+
+    lemmatizer = WordNetLemmatizer()
+    tokens = [lemmatizer.lemmatize(token) for token in tokens]
+    
+    return tokens
+
+def extract_skills(tokens):
+    """Extract known skills from a list of tokens"""
+    extracted_skills = set()
+    
+    for token in tokens:
+        token_lower = token.lower()
+        
+        if token_lower in SKILLS_DB:
+            
+            for skill in SKILLS_DB:
+                if skill == token_lower:
+                    extracted_skills.add(skill.capitalize())
+                    break
+    
+    return list(extracted_skills)
 
 def generate_recommendations(text):
     pass
