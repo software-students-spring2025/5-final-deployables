@@ -2,6 +2,12 @@
 
 A comprehensive resume analysis system that uses machine learning to match resumes with job market requirements, providing personalized feedback and recommendations.
 
+<img width="781" alt="image" src="https://github.com/user-attachments/assets/e488080f-d3c9-47fc-92ec-c3b606af8b3b" />
+
+<img width="781" alt="image" src="https://github.com/user-attachments/assets/e544332c-5b1a-4e61-b0ee-0bb0f9c4de7a" />
+
+
+
 ## Project Description
 
 The Resume Analyzer is a comprehensive web application that helps job seekers improve their resumes by analyzing them against current job market trends. The system identifies skills present in the resume, highlights missing in-demand skills, and provides personalized recommendations for improvement.
