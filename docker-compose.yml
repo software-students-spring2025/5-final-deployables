@@ -11,18 +11,24 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - ML_API_URL=http://ml:5000
+      - FLASK_ENV=development
     volumes:
       - ./api_server:/app
+      - ./tmp:/tmp  # Shared temp folder for file processing
     restart: unless-stopped
 
   ml:
     build: ./ml_matcher
     ports:
       - "5001:5000"
+    depends_on:
+      - mongo
     environment:
+      - MONGO_URI=mongodb://mongo:27017
       - FLASK_ENV=development
     volumes:
       - ./ml_matcher:/app
+      - ./tmp:/tmp  # Shared temp folder for file processing
     restart: unless-stopped
 
   mongo:

@@ -1,39 +1,37 @@
-# ml_matcher/app/main.py
+# ml_matcher/app/main.py (update to use real data)
 from flask import Flask, request, jsonify
 import os
 import PyPDF2
 import docx
 import nltk
 import re
+import pymongo
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
+from app.skill_extractor import SkillExtractor
+from app.scrapers.scrape_scheduler import ScrapeScheduler
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Make sure NLTK data is downloaded (this is needed for tokenization and stopwords)
+# Connect to MongoDB
+mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
+mongo_client = pymongo.MongoClient(mongo_uri)
+
+# Create skill extractor
+skill_extractor = SkillExtractor(mongo_client)
+
+# Start scheduler in background (commented out for testing)
+# scrape_scheduler = ScrapeScheduler(mongo_uri)
+# scheduler_thread = scrape_scheduler.start_scheduler_thread()
+
+# Make sure NLTK data is downloaded
 try:
     nltk.data.find('tokenizers/punkt')
     nltk.data.find('corpora/stopwords')
 except LookupError:
     nltk.download('punkt')
     nltk.download('stopwords')
-
-# Skill database - in a real application, this would come from MongoDB
-# This is a simplified version for development
-SKILL_DATABASE = {
-    "programming_languages": ["Python", "JavaScript", "Java", "C++", "Ruby", "Go", "PHP", "Swift", "TypeScript", "C#"],
-    "web_technologies": ["React", "Angular", "Vue.js", "Node.js", "Django", "Flask", "Express.js", "HTML", "CSS", "Bootstrap"],
-    "cloud_platforms": ["AWS", "Azure", "Google Cloud", "Heroku", "DigitalOcean", "Kubernetes", "Docker"],
-    "databases": ["MongoDB", "PostgreSQL", "MySQL", "SQLite", "Redis", "Elasticsearch"],
-    "data_science": ["Machine Learning", "Data Analysis", "TensorFlow", "PyTorch", "Pandas", "NumPy", "Data Visualization", "Scikit-learn"]
-}
-
-# Job market demand - simplified version (1-100 scale)
-SKILL_DEMAND = {
-    "Python": 95, "JavaScript": 90, "Java": 85, "React": 90, "Angular": 75, 
-    "AWS": 90, "Docker": 90, "MongoDB": 80, "PostgreSQL": 85, "Machine Learning": 90
-}
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from a PDF file"""
@@ -65,59 +63,70 @@ def preprocess_text(text):
     
     return tokens
 
-def extract_skills(tokens):
+def extract_skills(tokens, text=None):
     """Extract skills from preprocessed text tokens"""
-    # Flatten the skills database for easier lookup
-    all_skills = []
-    skill_lookup = {}  # Maps lowercase skill to proper case
+    # Use the skill extractor
+    extracted_skills = []
     
-    for category, skills in SKILL_DATABASE.items():
-        for skill in skills:
-            all_skills.append(skill.lower())
-            skill_lookup[skill.lower()] = skill
-    
-    # Extract skills from tokens (look for single tokens and bigrams)
-    extracted_skills = set()
-    
-    # Single token skills
+    # First check tokens (single words)
     for token in tokens:
-        if token in all_skills:
-            extracted_skills.add(skill_lookup[token])
+        if token in skill_extractor.all_skills_lower:
+            extracted_skills.append(skill_extractor.all_skills_lower[token])
     
-    # Bigram skills (for multi-word skills like "Machine Learning")
-    bigrams = [tokens[i] + " " + tokens[i+1] for i in range(len(tokens)-1)]
-    for bigram in bigrams:
-        if bigram in all_skills:
-            extracted_skills.add(skill_lookup[bigram])
+    # Also check the full text for multi-word skills
+    if text:
+        text_lower = text.lower()
+        for skill in skill_extractor.all_skills:
+            if " " in skill and skill.lower() in text_lower:
+                extracted_skills.append(skill)
     
-    return list(extracted_skills)
+    return list(set(extracted_skills))  # Remove duplicates
 
 def calculate_match_score(identified_skills):
-    """Calculate match score based on identified skills"""
+    """Calculate match score based on identified skills and job market demand"""
     if not identified_skills:
         return 0
     
+    # Get current skill demand from database
+    skill_demand = skill_extractor.get_current_skill_demand()
+    
+    # If no demand data yet, use basic scoring
+    if not skill_demand:
+        return min(len(identified_skills) * 10, 100)  # Simple score based on number of skills
+    
     # Calculate score based on demand for identified skills
     total_demand = 0
+    skill_count = 0
+    
     for skill in identified_skills:
-        if skill in SKILL_DEMAND:
-            total_demand += SKILL_DEMAND[skill]
+        if skill in skill_demand:
+            total_demand += skill_demand[skill]
+            skill_count += 1
+    
+    # If no skills matched with demand data
+    if skill_count == 0:
+        return min(len(identified_skills) * 10, 100)  # Fall back to simple scoring
     
     # Normalize score to 0-100
-    max_possible = 100 * min(len(identified_skills), 10)  # Cap at 10 skills for normalization
-    if max_possible == 0:
-        return 0
+    # Formula: Average demand of identified skills
+    score = total_demand / skill_count
     
-    score = (total_demand / max_possible) * 100
     return min(score, 100)  # Cap at 100
 
 def identify_missing_skills(identified_skills):
     """Identify high-demand skills that are missing from the resume"""
+    # Get current skill demand from database
+    skill_demand = skill_extractor.get_current_skill_demand()
+    
+    # If no demand data yet, return empty list
+    if not skill_demand:
+        return []
+    
     missing_skills = []
     
     # Look for high-demand skills that aren't in the identified skills
-    for skill, demand in SKILL_DEMAND.items():
-        if skill not in identified_skills and demand >= 75:  # Only include high-demand skills
+    for skill, demand in skill_demand.items():
+        if skill not in identified_skills and demand >= 50:  # Only include medium to high-demand skills
             missing_skills.append((skill, demand))
     
     # Sort by demand (highest first) and limit to top 5
@@ -136,6 +145,20 @@ def generate_recommendations(identified_skills, missing_skills):
     if missing_skills:
         skills_str = ", ".join([skill for skill, _ in missing_skills[:3]])
         recommendations.append(f"Consider gaining experience with in-demand skills like {skills_str}.")
+    
+    # Get skills from database for more tailored recommendations
+    db = mongo_client["resume_analyzer"]
+    job_collection = db["job_postings"]
+    
+    # Find recent jobs that match some of the person's skills
+    if identified_skills:
+        matching_jobs = job_collection.find({
+            "skills": {"$in": identified_skills}
+        }).sort("scraped_date", -1).limit(3)
+        
+        job_titles = [job.get("title", "") for job in matching_jobs]
+        if job_titles:
+            recommendations.append(f"Your skills align with positions like: {', '.join(job_titles)}.")
     
     # Add generic recommendations
     recommendations.append("Quantify your achievements with metrics and specific outcomes.")
@@ -171,7 +194,7 @@ def analyze_resume():
         
         # Process text to extract skills
         tokens = preprocess_text(text)
-        identified_skills = extract_skills(tokens)
+        identified_skills = extract_skills(tokens, text)
         
         # Calculate match score
         match_score = calculate_match_score(identified_skills)
@@ -193,6 +216,31 @@ def analyze_resume():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ml_matcher/app/main.py (add endpoint to trigger scraper)
+@app.route('/run-scraper', methods=['POST'])
+def run_scraper():
+    """Run the job scraper manually"""
+    try:
+        # Initialize scraper
+        scrape_scheduler = ScrapeScheduler(mongo_uri)
+        
+        # Run scrapers
+        scrape_scheduler.run_scrapers()
+        
+        return jsonify({
+            "success": True,
+            "message": "Job scraping completed successfully"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 # For direct execution
 if __name__ == '__main__':
+    # Uncomment to start scraper on startup
+    # scrape_scheduler = ScrapeScheduler(mongo_uri)
+    # scheduler_thread = scrape_scheduler.start_scheduler_thread()
+    
     app.run(host='0.0.0.0', port=5000, debug=True)

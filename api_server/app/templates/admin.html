@@ -1,0 +1,149 @@
+<!-- api_server/app/templates/admin.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Analyzer Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .stats-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .stats-box {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+        .stats-box h3 {
+            margin: 0;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        .stats-box p {
+            margin: 0.5rem 0 0;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .admin-menu {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .admin-menu a {
+            padding: 0.75rem 1.25rem;
+            background-color: #4a6fa5;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .admin-menu a:hover {
+            background-color: #5987bd;
+        }
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .skill-name {
+            font-weight: 500;
+        }
+        .skill-demand {
+            color: #4a6fa5;
+            font-weight: bold;
+        }
+        .actions {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+        .action-btn {
+            padding: 0.75rem 1.25rem;
+            background-color: #4a6fa5;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .action-btn:hover {
+            background-color: #5987bd;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <header>
+            <h1>Resume Analyzer Admin</h1>
+        </header>
+        
+        <div class="admin-menu">
+            <a href="/admin">Dashboard</a>
+            <a href="/admin/jobs">Jobs</a>
+            <a href="/admin/skills">Skills</a>
+            <a href="/">Main Site</a>
+        </div>
+        
+        <div class="stats-row">
+            <div class="stats-box">
+                <h3>Total Jobs</h3>
+                <p>{{ job_count }}</p>
+            </div>
+            <div class="stats-box">
+                <h3>Resumes Analyzed</h3>
+                <p>{{ analysis_count }}</p>
+            </div>
+            <div class="stats-box">
+                <h3>Last Update</h3>
+                <p>{{ last_update.strftime('%d %b %Y') if last_update else 'N/A' }}</p>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <h2>Top Skills by Demand</h2>
+            
+            {% if top_skills %}
+            <div class="skill-grid">
+                {% for skill, demand in top_skills %}
+                <div class="skill-item">
+                    <span class="skill-name">{{ skill }}</span>
+                    <span class="skill-demand">{{ demand|round(1) }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No skill statistics available yet. Run the job scraper to collect data.</p>
+            {% endif %}
+        </div>
+        
+        <div class="actions">
+            <a href="/admin/run-scraper" class="action-btn">Run Job Scraper</a>
+        </div>
+    </div>
+</body>
+</html>

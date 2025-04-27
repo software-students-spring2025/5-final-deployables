@@ -164,3 +164,110 @@ async def list_analyses():
         return analyses
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving analyses: {str(e)}")
+
+# api_server/app/main.py (add admin routes)
+# Add these routes to your existing FastAPI application
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request):
+    """Admin dashboard"""
+    try:
+        # Initialize MongoDB client
+        mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
+        mongo_client = pymongo.MongoClient(mongo_uri)
+        db = mongo_client["resume_analyzer"]
+        
+        # Get basic stats
+        job_count = db.job_postings.count_documents({})
+        analysis_count = db.analyses.count_documents({})
+        
+        # Get skill statistics
+        skill_stats = db.job_skills.find_one({"type": "statistics"})
+        
+        # Get top skills by demand
+        top_skills = []
+        if skill_stats and "skill_demand" in skill_stats:
+            skill_demand = skill_stats["skill_demand"]
+            top_skills = sorted(skill_demand.items(), key=lambda x: x[1], reverse=True)[:20]
+        
+        # Render admin template
+        return templates.TemplateResponse(
+            "admin.html",
+            {
+                "request": request,
+                "job_count": job_count,
+                "analysis_count": analysis_count,
+                "top_skills": top_skills,
+                "last_update": skill_stats.get("date") if skill_stats else None
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error accessing admin dashboard: {str(e)}")
+
+@app.get("/admin/jobs", response_class=HTMLResponse)
+async def admin_jobs(request: Request):
+    """Admin job listings"""
+    try:
+        # Initialize MongoDB client
+        mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
+        mongo_client = pymongo.MongoClient(mongo_uri)
+        db = mongo_client["resume_analyzer"]
+        
+        # Get recent jobs
+        jobs = list(db.job_postings.find().sort("scraped_date", -1).limit(50))
+        
+        # Convert ObjectId to string for JSON serialization
+        for job in jobs:
+            job["_id"] = str(job["_id"])
+        
+        # Render jobs template
+        return templates.TemplateResponse(
+            "admin_jobs.html",
+            {
+                "request": request,
+                "jobs": jobs
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error accessing jobs: {str(e)}")
+
+@app.get("/admin/skills", response_class=HTMLResponse)
+async def admin_skills(request: Request):
+    """Admin skill statistics"""
+    try:
+        # Initialize MongoDB client
+        mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
+        mongo_client = pymongo.MongoClient(mongo_uri)
+        db = mongo_client["resume_analyzer"]
+        
+        # Get skill categories
+        categories = list(db.job_skills.find({"type": "category"}))
+        
+        # Get skill statistics
+        skill_stats = db.job_skills.find_one({"type": "statistics"})
+        
+        # Render skills template
+        return templates.TemplateResponse(
+            "admin_skills.html",
+            {
+                "request": request,
+                "categories": categories,
+                "skill_stats": skill_stats
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error accessing skills: {str(e)}")
+
+@app.get("/admin/run-scraper", response_class=HTMLResponse)
+async def admin_run_scraper(request: Request):
+    """Trigger job scraper manually"""
+    try:
+        # Call the ML service to run the scraper
+        ml_service_url = os.environ.get("ML_API_URL", "http://ml:5000")
+        response = requests.post(f"{ml_service_url}/run-scraper")
+        response.raise_for_status()
+        
+        # Redirect back to admin dashboard
+        return RedirectResponse(url="/admin", status_code=303)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error running scraper: {str(e)}")

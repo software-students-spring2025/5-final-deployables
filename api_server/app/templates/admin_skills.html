@@ -1,0 +1,147 @@
+<!-- api_server/app/templates/admin_skills.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Skill Statistics - Resume Analyzer Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .admin-menu {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .admin-menu a {
+            padding: 0.75rem 1.25rem;
+            background-color: #4a6fa5;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .admin-menu a:hover {
+            background-color: #5987bd;
+        }
+        .category-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        .category-header {
+            background-color: #4a6fa5;
+            color: white;
+            padding: 1rem 1.5rem;
+        }
+        .category-header h3 {
+            margin: 0;
+        }
+        .category-content {
+            padding: 1.5rem;
+        }
+        .skill-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        .skill-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        .skill-name {
+            font-weight: 500;
+        }
+        .demand-bar {
+            width: 100px;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-right: 1rem;
+        }
+        .demand-level {
+            height: 100%;
+            background-color: #4a6fa5;
+            border-radius: 4px;
+        }
+        .demand-value {
+            font-weight: bold;
+            min-width: 40px;
+            text-align: right;
+        }
+        .stats-info {
+            margin-bottom: 2rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <header>
+            <h1>Skill Statistics</h1>
+        </header>
+        
+        <div class="admin-menu">
+            <a href="/admin">Dashboard</a>
+            <a href="/admin/jobs">Jobs</a>
+            <a href="/admin/skills">Skills</a>
+            <a href="/">Main Site</a>
+        </div>
+        
+        <div class="stats-info">
+            {% if skill_stats %}
+            <p>Statistics based on {{ skill_stats.total_jobs }} jobs over the past {{ skill_stats.period_days }} days. Last updated: {{ skill_stats.date.strftime('%d %b %Y %H:%M') }}</p>
+            {% else %}
+            <p>No skill statistics available yet. Run the job scraper to collect data.</p>
+            {% endif %}
+        </div>
+        
+        {% for category in categories %}
+        <div class="category-card">
+            <div class="category-header">
+                <h3>{{ category.display_name }}</h3>
+            </div>
+            <div class="category-content">
+                <div class="skill-list">
+                    {% if category.skills_with_demand %}
+                    {% for skill_data in category.skills_with_demand %}
+                    <div class="skill-item">
+                        <span class="skill-name">{{ skill_data.name }}</span>
+                        <div style="display: flex; align-items: center;">
+                            <div class="demand-bar">
+                                <div class="demand-level"></div>
+                            </div>
+                            <span class="demand-value">{{ skill_data.demand|round(1) }}%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% elif category.skills %}
+                    {% for skill in category.skills %}
+                    <div class="skill-item">
+                        <span class="skill-name">{{ skill }}</span>
+                        <div style="display: flex; align-items: center;">
+                            <div class="demand-bar">
+                                <div class="demand-level" style="width: 0%;"></div>
+                            </div>
+                            <span class="demand-value">0%</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p>No skills in this category</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
