@@ -19,7 +19,8 @@ services:
     build: ./ml_matcher
     ports:
       - "5001:5000"
-    # No flask specific environment variables anymore
+    environment:
+      - FLASK_ENV=development
     volumes:
       - ./ml_matcher:/app
     restart: unless-stopped
@@ -30,6 +31,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
     restart: unless-stopped
 
 volumes:
