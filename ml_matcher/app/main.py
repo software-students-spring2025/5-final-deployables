@@ -67,8 +67,13 @@ def extract_skills(tokens):
     
     return list(extracted_skills)
 
-def generate_recommendations(text):
-    pass
+def generate_recommendations(identified_skills, missing_skills):
+    """Returns possible recommendations that are missing from identified skills"""
+    recommendations = []
+    for skill, confidence in missing_skills:
+        if skill not in identified_skills and confidence > 0.8:
+            recommendations.append(skill)
+    return recommendations
 
 @app.route('/analyze', methods=['POST'])
 def analyze_resume():
