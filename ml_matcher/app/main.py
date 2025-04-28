@@ -55,6 +55,9 @@ def preprocess_text(text):
     """Preprocess text for skill extraction"""
     # Convert to lowercase
     text = text.lower()
+
+    # keep only letters
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
     
     # Tokenize
     tokens = word_tokenize(text)
