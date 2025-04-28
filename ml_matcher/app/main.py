@@ -5,6 +5,7 @@ import PyPDF2
 import docx
 import nltk
 import re
+import pickle
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
@@ -34,6 +35,13 @@ SKILL_DEMAND = {
     "Python": 95, "JavaScript": 90, "Java": 85, "React": 90, "Angular": 75, 
     "AWS": 90, "Docker": 90, "MongoDB": 80, "PostgreSQL": 85, "Machine Learning": 90
 }
+
+with open('model.pkl', 'rb') as f:
+    model = pickle.load(f)
+with open('vectorizer.pkl', 'rb') as f:
+    vectorizer = pickle.load(f)
+with open('label_encoder.pkl', 'rb') as f:
+    label_encoder = pickle.load(f)
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from a PDF file"""
