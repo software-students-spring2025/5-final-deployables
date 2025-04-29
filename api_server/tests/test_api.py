@@ -48,6 +48,9 @@ def mock_mongo(monkeypatch):
     
     # Patch MongoClient
     monkeypatch.setattr("pymongo.MongoClient", lambda _: mock_client)
+
+    from app.main import app, get_database
+    app.dependency_overrides[get_database] = lambda: mock_db
     
     return {
         "client": mock_client,
