@@ -1,16 +1,15 @@
-![API Server CI/CD](https://github.com/software-students-spring2025/5-final-deployables/actions/workflows/api_server.yml/badge.svg)
-
+[![API Server CI/CD](https://github.com/software-students-spring2025/5-final-deployables/actions/workflows/api_server.yml/badge.svg)](https://github.com/software-students-spring2025/5-final-deployables/actions/workflows/api_server.yml)
+[![ML Matcher CI/CD](https://github.com/software-students-spring2025/5-final-deployables/actions/workflows/ml_matcher.yml/badge.svg)](https://github.com/software-students-spring2025/5-final-deployables/actions/workflows/ml_matcher.yml)
 ![License](https://img.shields.io/github/license/software-students-spring2025/5-final-deployables)
-
 ![Deployed](https://img.shields.io/badge/Deployed-Success-green)
 
-Juno Cheung(https://github.com/avacheungx)
+[Juno Cheung](https://github.com/avacheungx)
 
-Brandon Morales(https://github.com/BAMOEQ)
+[Brandon Morales](https://github.com/BAMOEQ)
 
-Issac Vivar(https://github.com/isaacv3)
+[Isaac Vivar](https://github.com/isaacv3)
 
-Patrick Cao(https://github.com/Novrain7)
+[Patrick Cao](https://github.com/Novrain7)
 
 # Resume Analyzer Project
 
