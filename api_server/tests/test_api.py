@@ -10,7 +10,7 @@ from datetime import datetime
 # Add the parent directory to the path so we can import the app
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.main import app
+from app.main import app, get_database
 
 client = TestClient(app)
 
@@ -25,31 +25,37 @@ def mock_mongo(monkeypatch):
     mock_client.resume_analyzer = mock_db
     mock_db.resumes = mock_resume_collection
     mock_db.analyses = mock_analysis_collection
+
+    mock_resume_collection.insert_one.return_value = MagicMock(inserted_id="fake-id")
+    mock_analysis_collection.insert_one.return_value = MagicMock(inserted_id="fake-id")
     
     # Set up return values
+    mock_resume_collection.find_one.return_value = {
+        "id": "test-id",
+        "name": "Test User",
+        "email": "test@example.com",
+        "_id": "some_id"
+    }
     mock_analysis_collection.find_one.return_value = {
         "resume_id": "test-id",
         "match_score": 85.5,
         "skills_identified": ["Python", "JavaScript", "React"],
         "missing_skills": [("AWS", 90), ("Docker", 85)],
-        "recommendations": ["Test recommendation"]
+        "recommendations": ["Test recommendation"],
+        "_id": "some_id"
     }
-    
-    mock_resume_collection.find_one.return_value = {
-        "id": "test-id",
-        "name": "Test User",
-        "email": "test@example.com"
-    }
-    
-    mock_analysis_collection.find.return_value.sort.return_value.limit.return_value = [
+
+    # Correct behavior for find().sort().limit()
+    mock_cursor = MagicMock()
+    mock_cursor.sort.return_value.limit.return_value = [
         {"resume_id": "test-id-1", "match_score": 80},
         {"resume_id": "test-id-2", "match_score": 75}
     ]
+    mock_analysis_collection.find.return_value = mock_cursor
     
     # Patch MongoClient
     monkeypatch.setattr("pymongo.MongoClient", lambda _: mock_client)
 
-    from app.main import app, get_database
     app.dependency_overrides[get_database] = lambda: mock_db
     
     return {
