@@ -1,3 +1,10 @@
+![API Server CI/CD](https://github.com/software-students-spring2025/5-final-deployables/actions/workflows/api_server.yml/badge.svg)
+
+![License](https://img.shields.io/github/license/software-students-spring2025/5-final-deployables)
+![Deployed](https://img.shields.io/badge/Deployed-Success-green)
+
+
+
 # Resume Analyzer Project
 
 A comprehensive resume analysis system that uses machine learning to match resumes with job market requirements, providing personalized feedback and recommendations.
