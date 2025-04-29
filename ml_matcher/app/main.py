@@ -1,6 +1,7 @@
 # ml_matcher/app/main.py
 from flask import Flask, request, jsonify
 import os
+import numpy as np
 import PyPDF2
 import docx
 import nltk
