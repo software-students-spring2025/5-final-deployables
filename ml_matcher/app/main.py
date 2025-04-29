@@ -6,6 +6,7 @@ import docx
 import nltk
 import re
 import pickle
+
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 
@@ -42,6 +43,8 @@ with open('vectorizer.pkl', 'rb') as f:
     vectorizer = pickle.load(f)
 with open('label_encoder.pkl', 'rb') as f:
     label_encoder = pickle.load(f)
+with open('grouped_tokens.pkl', 'rb') as f:
+    grouped_tokens = pickle.load(f)
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from a PDF file"""
@@ -102,6 +105,17 @@ def extract_skills(tokens):
             extracted_skills.add(skill_lookup[bigram])
     
     return list(extracted_skills)
+
+def predict_labels(tokens):
+    """Vectorizes the tokenized resume and runs it through the Random Forest Classifier and returns a list of the top 3 IT categories"""
+    processed_text = ' '.join(tokens)
+    text_vector = vectorizer.transform([processed_text])
+
+    predicted_label_encoded = model.predict_proba(text_vector)[0]
+    job_probs = list(zip(label_encoder.classes_), predicted_label_encoded)
+
+    job_probs_sorted = sorted(job_probs, key=lambda x: x[1], reverse=True)
+    return job_probs_sorted[0:3]
 
 def calculate_match_score(identified_skills):
     """Calculate match score based on identified skills"""
@@ -183,6 +197,8 @@ def analyze_resume():
         # Process text to extract skills
         tokens = preprocess_text(text)
         identified_skills = extract_skills(tokens)
+
+        predicted_labels = predict_labels(tokens)
         
         # Calculate match score
         match_score = calculate_match_score(identified_skills)
@@ -196,6 +212,7 @@ def analyze_resume():
         # Return analysis results
         return jsonify({
             "resume_id": resume_id,
+            "predicted_labels": predicted_labels,
             "match_score": match_score,
             "skills_identified": identified_skills,
             "missing_skills": missing_skills,

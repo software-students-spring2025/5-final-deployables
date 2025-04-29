@@ -8,7 +8,7 @@ from unittest.mock import patch, MagicMock
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.main import app, extract_skills, preprocess_text, generate_recommendations
+from app.main import app, extract_skills, preprocess_text, generate_recommendations, predict_labels
 
 @pytest.fixture
 def client():
@@ -46,6 +46,15 @@ def test_extract_skills():
     
     # React should be found despite case differences
     assert "React" in skills or "React.js" in skills
+
+def test_predict_labels():
+    """Test label predictions"""
+
+    tokens = ["experience", "python", "javascript", "react"]
+    predicted_labels = predict_labels(tokens)
+
+    assert "SPECIALIST" in list(zip(*predicted_labels))[0]
+
 
 def test_generate_recommendations():
     """Test recommendation generation"""
