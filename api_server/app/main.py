@@ -153,11 +153,14 @@ async def list_analyses(db=Depends(get_database)):
     try:
         # Get recent analyses
         analyses = list(db.analyses.find().sort("analysis_date", -1).limit(10))
+        print("Analyses after query:", analyses)
         
         # Convert ObjectId to string for JSON serialization
         for analysis in analyses:
+            print("Individual analysis:", analysis)
             analysis["_id"] = str(analysis["_id"])
         
         return analyses
     except Exception as e:
+        print("Caught exception in list_analyses:", str(e))
         raise HTTPException(status_code=500, detail=f"Error retrieving analyses: {str(e)}")
