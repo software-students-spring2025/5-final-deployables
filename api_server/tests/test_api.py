@@ -45,8 +45,8 @@ def mock_mongo(monkeypatch):
     mock_cursor = MagicMock()
     mock_cursor.sort.return_value = mock_cursor  # chaining
     mock_cursor.limit.return_value = [
-        {"resume_id": "test-id-1", "match_score": 80},
-        {"resume_id": "test-id-2", "match_score": 75}
+        {"resume_id": "test-id-1", "match_score": 80, "id": "some_id_1"},
+        {"resume_id": "test-id-2", "match_score": 75, "id": "some_id_2"}
     ]
     mock_analysis_collection.find.return_value = mock_cursor
 
