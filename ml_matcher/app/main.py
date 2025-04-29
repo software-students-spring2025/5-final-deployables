@@ -106,7 +106,7 @@ def extract_skills(tokens):
     
     return list(extracted_skills)
 
-def predict_label(tokens):
+def predict_labels(tokens):
     """Vectorizes the tokenized resume and runs it through the Random Forest Classifier and returns a list of the top 3 IT categories"""
     processed_text = ' '.join(tokens)
     text_vector = vectorizer.transform([processed_text])
@@ -198,7 +198,7 @@ def analyze_resume():
         tokens = preprocess_text(text)
         identified_skills = extract_skills(tokens)
 
-        predicted_labels = predict_label(tokens)
+        predicted_labels = predict_labels(tokens)
         
         # Calculate match score
         match_score = calculate_match_score(identified_skills)
