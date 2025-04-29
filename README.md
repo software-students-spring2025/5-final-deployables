@@ -4,7 +4,13 @@
 
 ![Deployed](https://img.shields.io/badge/Deployed-Success-green)
 
+Juno Cheung(https://github.com/avacheungx)
 
+Brandon Morales(https://github.com/BAMOEQ)
+
+Issac Vivar(https://github.com/isaacv3)
+
+Patrick Cao(https://github.com/Novrain7)
 
 # Resume Analyzer Project
 
