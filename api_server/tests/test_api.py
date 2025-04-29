@@ -19,23 +19,20 @@ client = TestClient(app)
 def mock_mongo(monkeypatch):
     mock_client = MagicMock()
     mock_db = MagicMock()
-    mock_resume_collection = MagicMock()
-    mock_analysis_collection = MagicMock()
-    
-    mock_client.resume_analyzer = mock_db
-    mock_db.resumes = mock_resume_collection
-    mock_db.analyses = mock_analysis_collection
 
+    # Resume collection mock
+    mock_resume_collection = MagicMock()
     mock_resume_collection.insert_one.return_value = MagicMock(inserted_id="fake-id")
-    mock_analysis_collection.insert_one.return_value = MagicMock(inserted_id="fake-id")
-    
-    # Set up return values
     mock_resume_collection.find_one.return_value = {
         "id": "test-id",
         "name": "Test User",
         "email": "test@example.com",
         "_id": "some_id"
     }
+
+    # Analysis collection mock
+    mock_analysis_collection = MagicMock()
+    mock_analysis_collection.insert_one.return_value = MagicMock(inserted_id="fake-id")
     mock_analysis_collection.find_one.return_value = {
         "resume_id": "test-id",
         "match_score": 85.5,
@@ -45,21 +42,25 @@ def mock_mongo(monkeypatch):
         "_id": "some_id"
     }
 
-    # Correct behavior for find().sort().limit()
     mock_cursor = MagicMock()
     mock_cursor.sort.return_value.limit.return_value = [
         {"resume_id": "test-id-1", "match_score": 80},
         {"resume_id": "test-id-2", "match_score": 75}
     ]
     mock_analysis_collection.find.return_value = mock_cursor
-    
-    # Patch MongoClient
+
+    # Link the collections
+    mock_db.resumes = mock_resume_collection
+    mock_db.analyses = mock_analysis_collection
+
     monkeypatch.setattr("pymongo.MongoClient", lambda _: mock_client)
+    mock_client.__getitem__.return_value = mock_db  
 
     app.dependency_overrides[get_database] = lambda: mock_db
-    
+
     return {
         "client": mock_client,
+        "db": mock_db,
         "resume_collection": mock_resume_collection,
         "analysis_collection": mock_analysis_collection
     }
