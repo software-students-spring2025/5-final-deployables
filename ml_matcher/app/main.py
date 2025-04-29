@@ -37,13 +37,13 @@ SKILL_DEMAND = {
     "AWS": 90, "Docker": 90, "MongoDB": 80, "PostgreSQL": 85, "Machine Learning": 90
 }
 
-with open('model/model.pkl', 'rb') as f:
+with open('./model/model.pkl', 'rb') as f:
     model = pickle.load(f)
-with open('model/vectorizer.pkl', 'rb') as f:
+with open('./model/vectorizer.pkl', 'rb') as f:
     vectorizer = pickle.load(f)
-with open('model/label_encoder.pkl', 'rb') as f:
+with open('./model/label_encoder.pkl', 'rb') as f:
     label_encoder = pickle.load(f)
-with open('model/grouped_tokens.pkl', 'rb') as f:
+with open('./model/grouped_tokens.pkl', 'rb') as f:
     grouped_tokens = pickle.load(f)
 
 def extract_text_from_pdf(pdf_file):
