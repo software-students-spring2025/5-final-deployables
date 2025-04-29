@@ -40,34 +40,16 @@ SKILL_DEMAND = {
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
-model = None
-vectorizer = None
-label_encoder = None
-grouped_tokens = None
-
 def load_models():
-    """Lazy-load the model and other components only when needed"""
-    global model, vectorizer, label_encoder, grouped_tokens
-    if model is None:
-        with open(os.path.join(base_dir, 'model', 'model.pkl'), 'rb') as f:
-            model = pickle.load(f)
-        with open(os.path.join(base_dir, 'model', 'vectorizer.pkl'), 'rb') as f:
-            vectorizer = pickle.load(f)
-        with open(os.path.join(base_dir, 'model', 'label_encoder.pkl'), 'rb') as f:
-            label_encoder = pickle.load(f)
-        with open(os.path.join(base_dir, 'model', 'grouped_tokens.pkl'), 'rb') as f:
-            grouped_tokens = pickle.load(f)
-
-"""
-with open(os.path.join(base_dir, 'model', 'model.pkl'), 'rb') as f:
-    model = pickle.load(f)
-with open(os.path.join(base_dir, 'model', 'vectorizer.pkl'), 'rb') as f:
-    vectorizer = pickle.load(f)
-with open(os.path.join(base_dir, 'model', 'label_encoder.pkl'), 'rb') as f:
-    label_encoder = pickle.load(f)
-with open(os.path.join(base_dir, 'model', 'grouped_tokens.pkl'), 'rb') as f:
-    grouped_tokens = pickle.load(f)
-"""
+    
+    with open(os.path.join(base_dir, 'model', 'model.pkl'), 'rb') as f:
+        model = pickle.load(f)
+    with open(os.path.join(base_dir, 'model', 'vectorizer.pkl'), 'rb') as f:
+        vectorizer = pickle.load(f)
+    with open(os.path.join(base_dir, 'model', 'label_encoder.pkl'), 'rb') as f:
+        label_encoder = pickle.load(f)
+    with open(os.path.join(base_dir, 'model', 'grouped_tokens.pkl'), 'rb') as f:
+        grouped_tokens = pickle.load(f)
 
 
 def extract_text_from_pdf(pdf_file):
@@ -132,7 +114,6 @@ def extract_skills(tokens):
 
 def predict_labels(tokens):
     """Vectorizes the tokenized resume and runs it through the Random Forest Classifier and returns a list of the top 3 IT categories"""
-    """
     processed_text = ' '.join(tokens)
     text_vector = vectorizer.transform([processed_text])
 
@@ -141,15 +122,6 @@ def predict_labels(tokens):
 
     job_probs_sorted = sorted(job_probs, key=lambda x: x[1], reverse=True)
     return job_probs_sorted[0:3]
-    """
-    load_models()
-    processed_text = ' '.join(tokens)
-    text_vector = vectorizer.transform([processed_text])
-
-    predicted_label_encoded = model.predict_proba(text_vector)[0]
-    job_probs = list(zip(label_encoder.classes_, predicted_label_encoded))
-    return sorted(job_probs, key=lambda x: x[1], reverse=True)[:3]
-
 
 def calculate_match_score(identified_skills):
     """Calculate match score based on identified skills"""
