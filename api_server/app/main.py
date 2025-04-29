@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException
+from fastapi import FastAPI, File, UploadFile, Form, Request, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -29,6 +29,12 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 # Set up templates with absolute path
 templates = Jinja2Templates(directory=templates_path)
 
+def get_database():
+    mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
+    mongo_client = pymongo.MongoClient(mongo_uri)
+    db = mongo_client["resume_analyzer"]
+    return db
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     """Render the main page"""
@@ -42,6 +48,7 @@ async def read_root(request: Request):
 @app.post("/upload")
 async def upload_resume(
     request: Request,
+    db=Depends(get_database),
     name: str = Form(...),
     email: str = Form(...),
     resume: UploadFile = File(...)
@@ -108,14 +115,9 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail=f"Error processing resume: {str(e)}")
 
 @app.get("/results/{resume_id}", response_class=HTMLResponse)
-async def get_results(request: Request, resume_id: str):
+async def get_results(request: Request, resume_id: str, db=Depends(get_database)):
     """Show analysis results"""
     try:
-        # Initialize MongoDB client
-        mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
-        mongo_client = pymongo.MongoClient(mongo_uri)
-        db = mongo_client["resume_analyzer"]
-        
         # Get analysis results
         analysis = db.analyses.find_one({"resume_id": resume_id})
         if not analysis:
@@ -146,14 +148,9 @@ async def get_results(request: Request, resume_id: str):
         raise HTTPException(status_code=500, detail=f"Error retrieving results: {str(e)}")
 
 @app.get("/api/analyses")
-async def list_analyses():
+async def list_analyses(db=Depends(get_database)):
     """API endpoint to list recent analyses"""
     try:
-        # Initialize MongoDB client
-        mongo_uri = os.environ.get("MONGO_URI", "mongodb://mongo:27017")
-        mongo_client = pymongo.MongoClient(mongo_uri)
-        db = mongo_client["resume_analyzer"]
-        
         # Get recent analyses
         analyses = list(db.analyses.find().sort("analysis_date", -1).limit(10))
         
