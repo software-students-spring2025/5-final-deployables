@@ -47,7 +47,7 @@ def mock_mongo(monkeypatch):
     ]
     
     # Patch MongoClient
-    monkeypatch.setattr("app.main.MongoClient", lambda _: mock_client)
+    monkeypatch.setattr("pymongo.MongoClient", lambda _: mock_client)
     
     return {
         "client": mock_client,
