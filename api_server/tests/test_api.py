@@ -42,21 +42,22 @@ def mock_mongo(monkeypatch):
         "_id": "some_id"
     }
 
+    # Make find().sort(...).limit(...) return a list of analyses, each with an _id
     mock_cursor = MagicMock()
-    mock_cursor.sort.return_value = mock_cursor  # chaining
-    mock_cursor.limit.return_value.__iter__.return_value = iter([
-        {"resume_id": "test-id-1", "match_score": 80, "id": "some_id_1"},
-        {"resume_id": "test-id-2", "match_score": 75, "id": "some_id_2"}
-    ])
+    mock_cursor.sort.return_value = mock_cursor  # chaining .sort()
+    mock_cursor.limit.return_value = [
+        {"_id": "some_id_1", "resume_id": "test-id-1", "match_score": 80},
+        {"_id": "some_id_2", "resume_id": "test-id-2", "match_score": 75}
+    ]
     mock_analysis_collection.find.return_value = mock_cursor
-
 
     # Link the collections
     mock_db.resumes = mock_resume_collection
     mock_db.analyses = mock_analysis_collection
 
+    # Override the MongoClient so get_database() returns our mock_db
     monkeypatch.setattr("pymongo.MongoClient", lambda _: mock_client)
-    mock_client.__getitem__.return_value = mock_db  
+    mock_client.__getitem__.return_value = mock_db
 
     app.dependency_overrides[get_database] = lambda: mock_db
 
@@ -76,7 +77,6 @@ def test_read_root(mock_mongo):
 @patch("app.main.requests.post")
 def test_upload_resume_success(mock_post, mock_mongo):
     """Test successful resume upload and analysis"""
-    # Mock the ML service response
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "match_score": 85.5,
@@ -86,83 +86,65 @@ def test_upload_resume_success(mock_post, mock_mongo):
     }
     mock_response.raise_for_status.return_value = None
     mock_post.return_value = mock_response
-    
-    # Create test file
+
     test_file_content = b"This is a test resume content"
-    
-    # Make the request
     response = client.post(
         "/upload",
         files={"resume": ("test_resume.pdf", test_file_content, "application/pdf")},
         data={"name": "Test User", "email": "test@example.com"}
     )
-    
-    # Assert response
+
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    
-    # Check that MongoDB was called to insert data
+
     resume_collection = mock_mongo["resume_collection"]
     analysis_collection = mock_mongo["analysis_collection"]
-    
     assert resume_collection.insert_one.call_count == 1
     assert analysis_collection.insert_one.call_count == 1
 
 @patch("app.main.requests.post")
 def test_upload_resume_ml_error(mock_post, mock_mongo):
     """Test error handling when ML service fails"""
-    # Mock the ML service error
     mock_post.side_effect = Exception("ML service error")
-    
-    # Create test file
+
     test_file_content = b"This is a test resume content"
-    
-    # Make the request
     response = client.post(
         "/upload",
         files={"resume": ("test_resume.pdf", test_file_content, "application/pdf")},
         data={"name": "Test User", "email": "test@example.com"}
     )
-    
-    # Assert response
+
     assert response.status_code == 500
     assert "ML service error" in response.json()["detail"]
 
 def test_get_results_success(mock_mongo):
     """Test getting results for a resume"""
     response = client.get("/results/test-id")
-    
-    # Assert response
+
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
-    
-    # Check that MongoDB was called to find data
+
     analysis_collection = mock_mongo["analysis_collection"]
     resume_collection = mock_mongo["resume_collection"]
-    
     analysis_collection.find_one.assert_called_once_with({"resume_id": "test-id"})
     resume_collection.find_one.assert_called_once_with({"id": "test-id"})
 
 def test_get_results_not_found(mock_mongo):
     """Test getting results for a non-existent resume"""
-    # Change the mock to return None
     mock_mongo["analysis_collection"].find_one.return_value = None
-    
+
     response = client.get("/results/non-existent-id")
-    
-    # Assert response
     assert response.status_code == 404
     assert "Analysis not found" in response.json()["detail"]
 
 def test_list_analyses(mock_mongo):
     """Test the API endpoint to list analyses"""
     response = client.get("/api/analyses")
-    
-    # Assert response
+
     assert response.status_code == 200
-    assert len(response.json()) == 2
-    assert response.json()[0]["resume_id"] == "test-id-1"
-    
-    # Check that MongoDB was called correctly
+    json_data = response.json()
+    assert len(json_data) == 2
+    assert json_data[0]["resume_id"] == "test-id-1"
+
     analysis_collection = mock_mongo["analysis_collection"]
     analysis_collection.find.assert_called_once()
