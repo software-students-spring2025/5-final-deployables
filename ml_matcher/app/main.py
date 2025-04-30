@@ -115,7 +115,7 @@ def predict_labels(tokens):
     text_vector = vectorizer.transform([processed_text])
 
     predicted_label_encoded = model.predict_proba(text_vector)[0]
-    job_probs = list(zip(label_encoder.classes_), predicted_label_encoded)
+    job_probs = list(zip(label_encoder.classes_, predicted_label_encoded))
 
     job_probs_sorted = sorted(job_probs, key=lambda x: x[1], reverse=True)
     return job_probs_sorted[0:3]
