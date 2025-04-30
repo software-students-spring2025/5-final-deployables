@@ -222,7 +222,10 @@ def analyze_resume():
             "recommendations": recommendations
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        print("Error during resume analysis:", e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500 # original
 
 # For direct execution
 if __name__ == '__main__':
