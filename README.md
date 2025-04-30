@@ -51,8 +51,7 @@ The project consists of three main components:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/${username}/resume-analyzer.git
-cd resume-analyzer
+git clone https://github.com/software-students-spring2025/5-final-deployables.git
 ```
 
 ### Environment Variables
