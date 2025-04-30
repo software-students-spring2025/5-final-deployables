@@ -10,7 +10,7 @@ services:
       - mongo
     environment:
       - MONGO_URI=mongodb://mongo:27017
-      - ML_API_URL=http://ml:5000
+      - ML_API_URL=http://157.230.231.84:5001
     volumes:
       - ./api_server:/app
     restart: unless-stopped
