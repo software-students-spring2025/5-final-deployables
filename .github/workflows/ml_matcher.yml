@@ -77,7 +77,7 @@ jobs:
         username: ${{ secrets.DIGITALOCEAN_USERNAME }}
         key: ${{ secrets.DIGITALOCEAN_SSHKEY }}
         script: |
-          cd ~/resume-analyzer
+          cd ~/5-final-deployables
           git pull
           docker-compose pull ml
           docker-compose up -d ml
